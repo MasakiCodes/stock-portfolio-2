@@ -196,7 +196,7 @@ def show_portfolio_overview(portfolio_name):
                     return 'color: red'
             return ''
         
-        styled_df = df.drop(['gain_loss_raw', 'current_value_raw'], axis=1).style.applymap(
+        styled_df = df.drop(['gain_loss_raw', 'current_value_raw'], axis=1).style.map(
             style_gain_loss, subset=['Gain/Loss', 'Gain/Loss %']
         )
         st.dataframe(styled_df, use_container_width=True)
@@ -274,8 +274,19 @@ def add_stocks_interface(portfolio_name):
         # Stock search and add
         st.subheader("Search and Add Stock")
         stock_symbol = st.text_input("Stock Symbol (e.g., AAPL, MSFT)", key="add_stock_symbol").upper()
-        shares = st.number_input("Number of Shares", min_value=0.01, step=0.01, key="add_shares")
-        avg_price = st.number_input("Average Purchase Price ($)", min_value=0.01, step=0.01, key="add_avg_price")
+        shares = st.number_input("Number of Shares", min_value=0.05, step=0.05, value=0.05, key="add_shares")
+        
+        # Get current market price for default average price
+        default_price = 0.01
+        if stock_symbol:
+            try:
+                current_price = stock_data_manager.get_current_price(stock_symbol)
+                if current_price is not None:
+                    default_price = current_price
+            except:
+                pass
+        
+        avg_price = st.number_input("Average Purchase Price ($)", min_value=0.01, step=0.01, value=default_price, key="add_avg_price")
         
         if st.button("Add Stock") and stock_symbol and shares > 0 and avg_price > 0:
             # Validate stock symbol
@@ -358,8 +369,8 @@ def manage_stocks_interface(portfolio_name):
             new_shares = st.number_input(
                 f"Shares", 
                 value=stock_info['shares'], 
-                min_value=0.01, 
-                step=0.01, 
+                min_value=0.05, 
+                step=0.05, 
                 key=f"shares_{symbol}"
             )
         
