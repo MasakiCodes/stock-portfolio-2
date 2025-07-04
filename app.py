@@ -36,6 +36,25 @@ if 'last_refresh' not in st.session_state:
 def main():
     st.title("📈 Stock Portfolio Dashboard")
     
+    # Show database connection status
+    if hasattr(portfolio_manager, 'use_supabase') and portfolio_manager.use_supabase:
+        st.success("🟢 Connected to Supabase Database")
+    else:
+        with st.expander("💡 Upgrade to Cloud Database (Optional)", expanded=False):
+            st.markdown("""
+            **Currently using local file storage.** 
+            
+            For better reliability and cloud storage, you can connect to Supabase (free):
+            
+            1. Create account at [supabase.com](https://supabase.com)
+            2. Create a new project  
+            3. Copy your database URL from Settings → Database
+            4. Add it as `SUPABASE_URL` in Replit Secrets
+            5. Restart the app
+            
+            **Benefits:** 500MB free storage, automatic backups, works forever
+            """)
+    
     # Sidebar for portfolio management
     with st.sidebar:
         st.header("Portfolio Management")
