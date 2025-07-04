@@ -10,8 +10,9 @@ The application follows a modular architecture with clear separation of concerns
 
 - **Frontend**: Streamlit web interface for user interaction
 - **Data Layer**: Yahoo Finance API integration for stock data
+- **Database**: PostgreSQL database for persistent portfolio storage
 - **Visualization**: Plotly charts for stock price and portfolio visualizations
-- **Persistence**: JSON file-based storage for portfolio data
+- **Persistence**: Database-backed storage with automatic migration from JSON files
 - **Caching**: In-memory caching for performance optimization
 
 ## Key Components
@@ -27,12 +28,22 @@ The application follows a modular architecture with clear separation of concerns
 ### 2. Portfolio Manager (portfolio_manager.py)
 - **Purpose**: Handles portfolio CRUD operations and persistence
 - **Key Features**:
-  - JSON file-based storage for portfolios
+  - Database-backed storage for portfolios
   - Portfolio creation and management
-  - Data serialization/deserialization with datetime handling
-  - Error handling for file operations
+  - Automatic migration from JSON files
+  - Integration with DatabaseManager for persistence
+  - Error handling for database operations
 
-### 3. Stock Data Manager (stock_data.py)
+### 3. Database Manager (database_manager.py)
+- **Purpose**: Manages PostgreSQL database operations
+- **Key Features**:
+  - SQLAlchemy ORM for database interactions
+  - Portfolio and Stock table definitions
+  - Automatic table creation and migration
+  - Session management and error handling
+  - JSON to database migration functionality
+
+### 4. Stock Data Manager (stock_data.py)
 - **Purpose**: Interfaces with Yahoo Finance API for stock data
 - **Key Features**:
   - Real-time stock price fetching
@@ -41,7 +52,7 @@ The application follows a modular architecture with clear separation of concerns
   - Multiple fallback mechanisms for price data
   - Error handling and graceful degradation
 
-### 4. Chart Manager (charts.py)
+### 5. Chart Manager (charts.py)
 - **Purpose**: Creates interactive visualizations for stock data
 - **Key Features**:
   - Candlestick charts with volume overlays
@@ -65,10 +76,12 @@ The application follows a modular architecture with clear separation of concerns
 - **pandas**: Data manipulation and analysis
 - **numpy**: Numerical computing
 - **plotly**: Interactive visualization library
+- **sqlalchemy**: SQL toolkit and ORM for database operations
+- **psycopg2-binary**: PostgreSQL adapter for Python
 
 ### Data Sources
 - **Yahoo Finance**: Primary source for stock prices and historical data
-- **JSON Files**: Local storage for portfolio persistence
+- **PostgreSQL**: Database for persistent portfolio storage
 
 ## Deployment Strategy
 
@@ -79,9 +92,10 @@ The application is designed for local development and can be deployed on:
 - **Docker**: Containerized deployment (would require Dockerfile)
 
 ### Key Considerations
-- File-based persistence suitable for single-user scenarios
+- PostgreSQL database provides robust data persistence
+- Automatic migration from JSON files for seamless transition
+- SQLAlchemy ORM ensures proper database relationships
 - Caching strategy optimized for development environments
-- No database required for basic functionality
 
 ## User Preferences
 
@@ -91,3 +105,6 @@ Preferred communication style: Simple, everyday language.
 
 Changelog:
 - July 04, 2025. Initial setup
+- July 04, 2025. Added PostgreSQL database integration with SQLAlchemy ORM
+- July 04, 2025. Updated share increments to 0.05 and auto-fill market prices
+- July 04, 2025. Implemented automatic JSON to database migration

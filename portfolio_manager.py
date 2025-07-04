@@ -2,56 +2,46 @@ import streamlit as st
 from datetime import datetime
 import json
 import os
+from database_manager import DatabaseManager
 
 class PortfolioManager:
     def __init__(self):
         self.portfolios_file = "portfolios.json"
+        self.db_manager = DatabaseManager()
         self.load_portfolios()
     
     def load_portfolios(self):
-        """Load portfolios from file if exists"""
+        """Load portfolios from database"""
         try:
+            # Try to migrate from JSON file if it exists
             if os.path.exists(self.portfolios_file):
-                with open(self.portfolios_file, 'r') as f:
-                    data = json.load(f)
-                    # Convert date strings back to datetime objects
-                    for portfolio_name, portfolio_data in data.items():
-                        if 'created_date' in portfolio_data:
-                            portfolio_data['created_date'] = datetime.fromisoformat(portfolio_data['created_date'])
-                        for symbol, stock_data in portfolio_data.get('stocks', {}).items():
-                            if 'last_updated' in stock_data:
-                                stock_data['last_updated'] = datetime.fromisoformat(stock_data['last_updated'])
-                    
-                    if 'portfolios' not in st.session_state:
-                        st.session_state.portfolios = data
+                self.db_manager.migrate_from_json(self.portfolios_file)
+            
+            # Load from database
+            portfolio_data = self.db_manager.load_portfolios()
+            
+            if 'portfolios' not in st.session_state:
+                st.session_state.portfolios = portfolio_data
         except Exception as e:
             st.error(f"Error loading portfolios: {str(e)}")
     
     def save_portfolios(self):
-        """Save portfolios to file"""
+        """Save portfolios to database"""
         try:
-            data = st.session_state.portfolios.copy()
-            # Convert datetime objects to strings for JSON serialization
-            for portfolio_name, portfolio_data in data.items():
-                if 'created_date' in portfolio_data:
-                    portfolio_data['created_date'] = portfolio_data['created_date'].isoformat()
-                for symbol, stock_data in portfolio_data.get('stocks', {}).items():
-                    if 'last_updated' in stock_data:
-                        stock_data['last_updated'] = stock_data['last_updated'].isoformat()
-            
-            with open(self.portfolios_file, 'w') as f:
-                json.dump(data, f, indent=2)
+            for portfolio_name, portfolio_data in st.session_state.portfolios.items():
+                self.db_manager.save_portfolio(portfolio_name, portfolio_data)
         except Exception as e:
             st.error(f"Error saving portfolios: {str(e)}")
     
     def create_portfolio(self, name):
         """Create a new portfolio"""
         if name not in st.session_state.portfolios:
-            st.session_state.portfolios[name] = {
+            portfolio_data = {
                 'stocks': {},
                 'created_date': datetime.now()
             }
-            self.save_portfolios()
+            st.session_state.portfolios[name] = portfolio_data
+            self.db_manager.save_portfolio(name, portfolio_data)
             return True
         return False
     
@@ -59,7 +49,7 @@ class PortfolioManager:
         """Delete a portfolio"""
         if name in st.session_state.portfolios:
             del st.session_state.portfolios[name]
-            self.save_portfolios()
+            self.db_manager.delete_portfolio(name)
             return True
         return False
     
@@ -88,7 +78,7 @@ class PortfolioManager:
                     'last_updated': datetime.now()
                 }
             
-            self.save_portfolios()
+            self.db_manager.add_stock(portfolio_name, symbol, shares, avg_price)
             return True
         return False
     
@@ -98,7 +88,7 @@ class PortfolioManager:
             portfolio = st.session_state.portfolios[portfolio_name]
             if symbol in portfolio['stocks']:
                 del portfolio['stocks'][symbol]
-                self.save_portfolios()
+                self.db_manager.remove_stock(portfolio_name, symbol)
                 return True
         return False
     
@@ -112,7 +102,7 @@ class PortfolioManager:
                     'avg_price': avg_price,
                     'last_updated': datetime.now()
                 }
-                self.save_portfolios()
+                self.db_manager.update_stock(portfolio_name, symbol, shares, avg_price)
                 return True
         return False
     
